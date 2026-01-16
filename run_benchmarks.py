@@ -23,8 +23,20 @@ from pathlib import Path
 from typing import Any
 
 
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+def _perf_repo_root() -> Path:
+    return Path(__file__).resolve().parent
+
+
+def _detect_x07_repo_root(perf_repo_root: Path) -> Path | None:
+    env = os.environ.get("X07_REPO_ROOT")
+    if env:
+        return Path(env).expanduser().resolve()
+
+    sibling = perf_repo_root.parent / "x07"
+    if (sibling / "Cargo.toml").is_file():
+        return sibling
+
+    return None
 
 
 _HOST_RUNNER_CACHE: dict[str, Path] = {}
@@ -227,13 +239,13 @@ def generate_input_data(benchmark: str, size_kb: int, seed: int = 42) -> InputDa
 class X07Runner:
     """Runner for X07 programs (via host runner)."""
 
-    def __init__(self, repo_root: Path, cc_profile: str = "default"):
-        self.repo_root = repo_root
+    def __init__(self, x07_repo_root: Path, cc_profile: str = "default"):
+        self.x07_repo_root = x07_repo_root
         self.cc_profile = cc_profile
         self.host_runner = self._find_host_runner()
 
     def _find_host_runner(self) -> Path:
-        return _ensure_host_runner(self.repo_root)
+        return _ensure_host_runner(self.x07_repo_root)
 
     def compile_and_run(
         self,
@@ -260,7 +272,7 @@ class X07Runner:
                 cmd,
                 capture_output=True,
                 text=True,
-                cwd=str(self.repo_root),
+                cwd=str(self.x07_repo_root),
             )
 
             if result.returncode != 0:
@@ -305,7 +317,7 @@ class X07Runner:
                 cmd,
                 capture_output=True,
                 text=True,
-                cwd=str(self.repo_root),
+                cwd=str(self.x07_repo_root),
             )
 
             if result.returncode != 0:
@@ -328,13 +340,13 @@ class X07Runner:
 class X07DirectRunner:
     """Runner for compiled X07 binaries (direct execution, no host runner overhead)."""
 
-    def __init__(self, repo_root: Path, cc_profile: str = "default"):
-        self.repo_root = repo_root
+    def __init__(self, x07_repo_root: Path, cc_profile: str = "default"):
+        self.x07_repo_root = x07_repo_root
         self.cc_profile = cc_profile
         self.host_runner = self._find_host_runner()
 
     def _find_host_runner(self) -> Path:
-        return _ensure_host_runner(self.repo_root)
+        return _ensure_host_runner(self.x07_repo_root)
 
     def compile(self, program_path: Path, artifact_path: Path) -> float:
         """Compile an X07 program to a native binary, returning compile time in ms."""
@@ -352,7 +364,7 @@ class X07DirectRunner:
             cmd,
             capture_output=True,
             text=True,
-            cwd=str(self.repo_root),
+            cwd=str(self.x07_repo_root),
         )
         compile_time = (time.perf_counter() - start) * 1000
 
@@ -576,10 +588,10 @@ class RustCargoRunner:
 class X07ProjectRunner:
     """Runner for X07 projects (with package dependencies)."""
 
-    def __init__(self, repo_root: Path, cc_profile: str = "default"):
-        self.repo_root = repo_root
+    def __init__(self, x07_repo_root: Path, cc_profile: str = "default"):
+        self.x07_repo_root = x07_repo_root
         self.cc_profile = cc_profile
-        self.host_runner = _ensure_host_runner(repo_root)
+        self.host_runner = _ensure_host_runner(x07_repo_root)
 
     def compile(self, project_file: Path, artifact_path: Path) -> float:
         """Compile an X07 project to a native binary, returning compile time in ms."""
@@ -597,7 +609,7 @@ class X07ProjectRunner:
             cmd,
             capture_output=True,
             text=True,
-            cwd=str(self.repo_root),
+            cwd=str(self.x07_repo_root),
         )
         compile_time = (time.perf_counter() - start) * 1000
 
@@ -670,7 +682,8 @@ class X07ProjectRunner:
 def run_benchmark(
     benchmark: str,
     input_data: InputData,
-    repo_root: Path,
+    x07_repo_root: Path,
+    perf_repo_root: Path,
     tmp_dir: Path,
     iterations: int = 5,
     warmup: int = 1,
@@ -680,7 +693,7 @@ def run_benchmark(
     """Run a benchmark across all languages."""
     results = []
 
-    perf_dir = repo_root / "perf-compare"
+    perf_dir = perf_repo_root
     c_runner = CRunner()
     rust_runner = RustRunner()
 
@@ -720,8 +733,8 @@ def run_benchmark(
             project_data["entry"] = entry
             project_file.write_text(json.dumps(project_data, indent=2))
 
-            x07_runner = X07Runner(repo_root, cc_profile=x07_cc_profile)
-            project_runner = X07ProjectRunner(repo_root, cc_profile=x07_cc_profile)
+            x07_runner = X07Runner(x07_repo_root, cc_profile=x07_cc_profile)
+            project_runner = X07ProjectRunner(x07_repo_root, cc_profile=x07_cc_profile)
             artifact = tmp_dir / f"{benchmark}_x07"
 
             result.compile_time_ms = project_runner.compile(project_file, artifact)
@@ -763,8 +776,8 @@ def run_benchmark(
     elif x07_prog.exists():
         result = BenchmarkResult(language="X07", benchmark=benchmark)
         try:
-            x07_runner = X07Runner(repo_root, cc_profile=x07_cc_profile)
-            direct_runner = X07DirectRunner(repo_root, cc_profile=x07_cc_profile)
+            x07_runner = X07Runner(x07_repo_root, cc_profile=x07_cc_profile)
+            direct_runner = X07DirectRunner(x07_repo_root, cc_profile=x07_cc_profile)
             artifact = tmp_dir / f"{benchmark}_x07"
 
             result.compile_time_ms = direct_runner.compile(x07_prog, artifact)
@@ -993,7 +1006,7 @@ def main(argv: list[str]) -> int:
         "--repo-root",
         type=Path,
         default=None,
-        help="Path to X07 repo root (default: auto-detect)",
+        help="Path to the x07 toolchain checkout (default: auto-detect; env: X07_REPO_ROOT)",
     )
     ap.add_argument("--size", type=int, default=100, help="Input size in KB (default: 100)")
     ap.add_argument("--iterations", type=int, default=5, help="Number of iterations (default: 5)")
@@ -1011,7 +1024,15 @@ def main(argv: list[str]) -> int:
     )
     args = ap.parse_args(argv)
 
-    repo_root = args.repo_root or _repo_root()
+    perf_repo_root = _perf_repo_root()
+    x07_repo_root = args.repo_root or _detect_x07_repo_root(perf_repo_root)
+    if x07_repo_root is None:
+        ap.error(
+            "x07 repo root not found. Set --repo-root /abs/path/to/x07 or set X07_REPO_ROOT."
+        )
+    x07_repo_root = x07_repo_root.expanduser().resolve()
+    if not (x07_repo_root / "Cargo.toml").is_file():
+        ap.error(f"invalid x07 repo root (missing Cargo.toml): {x07_repo_root}")
 
     all_benchmarks = ["sum_bytes", "word_count", "rle_encode", "byte_freq", "fibonacci"]
     benchmarks = args.benchmarks if args.benchmarks else all_benchmarks
@@ -1029,7 +1050,8 @@ def main(argv: list[str]) -> int:
             results = run_benchmark(
                 benchmark,
                 input_data,
-                repo_root,
+                x07_repo_root,
+                perf_repo_root,
                 tmp_dir,
                 iterations=args.iterations,
                 warmup=args.warmup,

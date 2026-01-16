@@ -1,6 +1,8 @@
-# Performance Comparison: X07 vs C vs Rust
+# x07-perf-compare
 
-This directory contains benchmark programs to compare performance and memory usage
+Performance comparison benchmarks: **X07 vs C vs Rust**
+
+This repo contains benchmark programs to compare performance and memory usage
 between X07, C, and Rust implementations of identical algorithms.
 
 ## Benchmarks
@@ -20,31 +22,31 @@ between X07, C, and Rust implementations of identical algorithms.
 
 ```bash
 # Run all benchmarks with default settings (100KB input, 5 iterations)
-python3 perf-compare/run_benchmarks.py
+python3 run_benchmarks.py
 
 # Run with custom input size (in KB)
-python3 perf-compare/run_benchmarks.py --size 1000
+python3 run_benchmarks.py --size 1000
 
 # Run specific benchmarks
-python3 perf-compare/run_benchmarks.py --benchmarks sum_bytes word_count
+python3 run_benchmarks.py --benchmarks sum_bytes word_count
 
 # More iterations for better statistics
-python3 perf-compare/run_benchmarks.py --iterations 10 --warmup 3
+python3 run_benchmarks.py --iterations 10 --warmup 3
 
 # Output as JSON
-python3 perf-compare/run_benchmarks.py --json > results.json
+python3 run_benchmarks.py --json > results.json
 
 # Direct binary execution (no host runner overhead)
-python3 perf-compare/run_benchmarks.py --direct
+python3 run_benchmarks.py --direct
 
 # Size-focused native builds (passes through to x07-host-runner --cc-profile)
-python3 perf-compare/run_benchmarks.py --x07-cc-profile size
+python3 run_benchmarks.py --x07-cc-profile size
 
-# Regex benchmarks require the native ext-regex backend staged into `deps/`
-./scripts/build_ext_regex.sh
+# Regex benchmarks require the native ext-regex backend staged into `deps/` in your x07 checkout
+cd /path/to/x07 && ./scripts/build_ext_regex.sh
 
 # Run against a different checkout of the repo (useful for before/after comparisons)
-python3 perf-compare/run_benchmarks.py --repo-root /path/to/x07
+python3 run_benchmarks.py --repo-root /path/to/x07
 ```
 
 ## Options
@@ -56,19 +58,19 @@ python3 perf-compare/run_benchmarks.py --repo-root /path/to/x07
 - `--json`: Output results as JSON
 - `--direct`: Run X07 binaries directly without host runner overhead
 - `--x07-cc-profile {default,size}`: Select the C toolchain profile for X07 builds
-- `--repo-root`: Override repo root (for comparing two checkouts)
+- `--repo-root`: Path to the `x07lang/x07` checkout (defaults to auto-detect; env: `X07_REPO_ROOT`)
 
 ## Directory Structure
 
 ```
-perf-compare/
+.
 ├── README.md
-├── run_benchmarks.py    # Benchmark runner script
-├── x07/             # X07 programs (.x07.json)
-├── projects/            # Project-based X07 benchmarks (packages)
-├── c/                   # C implementations
-├── rust/                # Rust implementations (single-file)
-└── rust_cargo/           # Rust implementations with Cargo deps
+├── run_benchmarks.py  # Benchmark runner script
+├── x07/               # X07 programs (.x07.json)
+├── projects/          # Project-based X07 benchmarks (packages)
+├── c/                 # C implementations
+├── rust/              # Rust implementations (single-file)
+└── rust_cargo/        # Rust implementations with Cargo deps
 ```
 
 ## Requirements

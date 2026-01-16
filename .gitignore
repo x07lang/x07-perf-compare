@@ -1,0 +1,41 @@
+# --- OS / editor noise ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- Python ---
+__pycache__/
+*.pyc
+
+# --- Rust / Cargo ---
+/target/
+/**/target/
+**/*.rlib
+**/*.rmeta
+
+# --- C/C++ build artifacts ---
+*.d
+*.o
+*.obj
+*.a
+*.lib
+*.la
+*.lo
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+a.out
+
+# --- Local benchmark outputs ---
+/results/
+/out/
+/tmp/
+/.cache/
+*.bench.json
+*.bench.csv
+*.bench.txt
