@@ -27,21 +27,6 @@ def _perf_repo_root() -> Path:
     return Path(__file__).resolve().parent
 
 
-def _detect_x07_repo_root(perf_repo_root: Path) -> Path | None:
-    env = os.environ.get("X07_REPO_ROOT")
-    if env:
-        return Path(env).expanduser().resolve()
-
-    sibling = perf_repo_root.parent / "x07"
-    if (sibling / "Cargo.toml").is_file():
-        return sibling
-
-    return None
-
-
-_HOST_RUNNER_CACHE: dict[str, Path] = {}
-
-
 def _x07_host_runner_prefix(host_runner: Path, cc_profile: str) -> list[str]:
     cmd = [str(host_runner)]
     if cc_profile != "default":
@@ -49,34 +34,64 @@ def _x07_host_runner_prefix(host_runner: Path, cc_profile: str) -> list[str]:
     return cmd
 
 
-def _ensure_host_runner(repo_root: Path) -> Path:
-    key = str(repo_root)
-    cached = _HOST_RUNNER_CACHE.get(key)
-    if cached is not None and cached.is_file() and os.access(cached, os.X_OK):
-        return cached
+def _is_executable(path: Path) -> bool:
+    return path.is_file() and os.access(path, os.X_OK)
 
-    exe_name = "x07-host-runner.exe" if sys.platform.startswith("win") else "x07-host-runner"
-    exe = repo_root / "target" / "release" / exe_name
-    subprocess.run(
-        ["cargo", "build", "--release", "-p", "x07-host-runner"],
-        cwd=str(repo_root),
-        check=True,
-        capture_output=True,
+
+def _x07_host_runner_basename() -> str:
+    if sys.platform.startswith("win"):
+        return "x07-host-runner.exe"
+    return "x07-host-runner"
+
+
+def _warm_x07_host_runner(host_runner: Path) -> None:
+    subprocess.run([str(host_runner), "--help"], check=True, capture_output=True)
+
+
+def _resolve_x07_host_runner(
+    perf_repo_root: Path, x07_host_runner: Path | None, x07_toolchain: Path | None
+) -> Path:
+    env_host_runner = os.environ.get("X07_HOST_RUNNER")
+    if x07_host_runner is None and env_host_runner:
+        x07_host_runner = Path(env_host_runner)
+
+    if x07_host_runner is not None:
+        p = x07_host_runner.expanduser().resolve()
+        if not _is_executable(p):
+            raise FileNotFoundError(f"x07-host-runner is not executable: {p}")
+        _warm_x07_host_runner(p)
+        return p
+
+    env_toolchain = os.environ.get("X07_TOOLCHAIN")
+    if x07_toolchain is None and env_toolchain:
+        x07_toolchain = Path(env_toolchain)
+
+    if x07_toolchain is not None:
+        root = x07_toolchain.expanduser().resolve()
+        p = root / _x07_host_runner_basename()
+        if not _is_executable(p):
+            raise FileNotFoundError(f"x07-host-runner not found in toolchain dir: {p}")
+        _warm_x07_host_runner(p)
+        return p
+
+    exe_name = _x07_host_runner_basename()
+    found = shutil.which(exe_name)
+    if found:
+        p = Path(found).expanduser().resolve()
+        if _is_executable(p):
+            _warm_x07_host_runner(p)
+            return p
+
+    local = perf_repo_root / exe_name
+    if _is_executable(local):
+        _warm_x07_host_runner(local)
+        return local
+
+    raise RuntimeError(
+        "x07-host-runner not found. Download the X07 toolchain from "
+        "https://github.com/x07lang/x07/releases, extract it, and either add it to PATH "
+        "or pass --x07-toolchain /path/to/dir (or set X07_TOOLCHAIN)."
     )
-    if not (exe.is_file() and os.access(exe, os.X_OK)):
-        raise RuntimeError(f"x07-host-runner binary not found at {exe}")
-
-    # Warm the binary once so benchmark timings don't include first-run cold-start overhead
-    # (macOS in particular can be noticeably slower on the first exec after a build).
-    subprocess.run(
-        [str(exe), "--help"],
-        cwd=str(repo_root),
-        check=True,
-        capture_output=True,
-    )
-
-    _HOST_RUNNER_CACHE[key] = exe
-    return exe
 
 
 def _time_bin() -> list[str] | None:
@@ -239,13 +254,10 @@ def generate_input_data(benchmark: str, size_kb: int, seed: int = 42) -> InputDa
 class X07Runner:
     """Runner for X07 programs (via host runner)."""
 
-    def __init__(self, x07_repo_root: Path, cc_profile: str = "default"):
-        self.x07_repo_root = x07_repo_root
+    def __init__(self, host_runner: Path, cc_profile: str = "default"):
+        self.cwd = host_runner.parent
         self.cc_profile = cc_profile
-        self.host_runner = self._find_host_runner()
-
-    def _find_host_runner(self) -> Path:
-        return _ensure_host_runner(self.x07_repo_root)
+        self.host_runner = host_runner
 
     def compile_and_run(
         self,
@@ -272,7 +284,7 @@ class X07Runner:
                 cmd,
                 capture_output=True,
                 text=True,
-                cwd=str(self.x07_repo_root),
+                cwd=str(self.cwd),
             )
 
             if result.returncode != 0:
@@ -317,7 +329,7 @@ class X07Runner:
                 cmd,
                 capture_output=True,
                 text=True,
-                cwd=str(self.x07_repo_root),
+                cwd=str(self.cwd),
             )
 
             if result.returncode != 0:
@@ -340,13 +352,10 @@ class X07Runner:
 class X07DirectRunner:
     """Runner for compiled X07 binaries (direct execution, no host runner overhead)."""
 
-    def __init__(self, x07_repo_root: Path, cc_profile: str = "default"):
-        self.x07_repo_root = x07_repo_root
+    def __init__(self, host_runner: Path, cc_profile: str = "default"):
+        self.cwd = host_runner.parent
         self.cc_profile = cc_profile
-        self.host_runner = self._find_host_runner()
-
-    def _find_host_runner(self) -> Path:
-        return _ensure_host_runner(self.x07_repo_root)
+        self.host_runner = host_runner
 
     def compile(self, program_path: Path, artifact_path: Path) -> float:
         """Compile an X07 program to a native binary, returning compile time in ms."""
@@ -364,7 +373,7 @@ class X07DirectRunner:
             cmd,
             capture_output=True,
             text=True,
-            cwd=str(self.x07_repo_root),
+            cwd=str(self.cwd),
         )
         compile_time = (time.perf_counter() - start) * 1000
 
@@ -588,10 +597,10 @@ class RustCargoRunner:
 class X07ProjectRunner:
     """Runner for X07 projects (with package dependencies)."""
 
-    def __init__(self, x07_repo_root: Path, cc_profile: str = "default"):
-        self.x07_repo_root = x07_repo_root
+    def __init__(self, host_runner: Path, cc_profile: str = "default"):
+        self.cwd = host_runner.parent
         self.cc_profile = cc_profile
-        self.host_runner = _ensure_host_runner(x07_repo_root)
+        self.host_runner = host_runner
 
     def compile(self, project_file: Path, artifact_path: Path) -> float:
         """Compile an X07 project to a native binary, returning compile time in ms."""
@@ -609,7 +618,7 @@ class X07ProjectRunner:
             cmd,
             capture_output=True,
             text=True,
-            cwd=str(self.x07_repo_root),
+            cwd=str(self.cwd),
         )
         compile_time = (time.perf_counter() - start) * 1000
 
@@ -682,7 +691,7 @@ class X07ProjectRunner:
 def run_benchmark(
     benchmark: str,
     input_data: InputData,
-    x07_repo_root: Path,
+    x07_host_runner: Path,
     perf_repo_root: Path,
     tmp_dir: Path,
     iterations: int = 5,
@@ -733,8 +742,8 @@ def run_benchmark(
             project_data["entry"] = entry
             project_file.write_text(json.dumps(project_data, indent=2))
 
-            x07_runner = X07Runner(x07_repo_root, cc_profile=x07_cc_profile)
-            project_runner = X07ProjectRunner(x07_repo_root, cc_profile=x07_cc_profile)
+            x07_runner = X07Runner(x07_host_runner, cc_profile=x07_cc_profile)
+            project_runner = X07ProjectRunner(x07_host_runner, cc_profile=x07_cc_profile)
             artifact = tmp_dir / f"{benchmark}_x07"
 
             result.compile_time_ms = project_runner.compile(project_file, artifact)
@@ -776,8 +785,8 @@ def run_benchmark(
     elif x07_prog.exists():
         result = BenchmarkResult(language="X07", benchmark=benchmark)
         try:
-            x07_runner = X07Runner(x07_repo_root, cc_profile=x07_cc_profile)
-            direct_runner = X07DirectRunner(x07_repo_root, cc_profile=x07_cc_profile)
+            x07_runner = X07Runner(x07_host_runner, cc_profile=x07_cc_profile)
+            direct_runner = X07DirectRunner(x07_host_runner, cc_profile=x07_cc_profile)
             artifact = tmp_dir / f"{benchmark}_x07"
 
             result.compile_time_ms = direct_runner.compile(x07_prog, artifact)
@@ -1003,10 +1012,16 @@ def print_summary_table(all_results: dict[str, list[BenchmarkResult]]) -> None:
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description="Run performance comparison benchmarks")
     ap.add_argument(
-        "--repo-root",
+        "--x07-host-runner",
         type=Path,
         default=None,
-        help="Path to the x07 toolchain checkout (default: auto-detect; env: X07_REPO_ROOT)",
+        help="Path to x07-host-runner (env: X07_HOST_RUNNER; default: search PATH)",
+    )
+    ap.add_argument(
+        "--x07-toolchain",
+        type=Path,
+        default=None,
+        help="Path to extracted X07 toolchain dir (env: X07_TOOLCHAIN)",
     )
     ap.add_argument("--size", type=int, default=100, help="Input size in KB (default: 100)")
     ap.add_argument("--iterations", type=int, default=5, help="Number of iterations (default: 5)")
@@ -1025,16 +1040,23 @@ def main(argv: list[str]) -> int:
     args = ap.parse_args(argv)
 
     perf_repo_root = _perf_repo_root()
-    x07_repo_root = args.repo_root or _detect_x07_repo_root(perf_repo_root)
-    if x07_repo_root is None:
-        ap.error(
-            "x07 repo root not found. Set --repo-root /abs/path/to/x07 or set X07_REPO_ROOT."
+    try:
+        x07_host_runner = _resolve_x07_host_runner(
+            perf_repo_root, args.x07_host_runner, args.x07_toolchain
         )
-    x07_repo_root = x07_repo_root.expanduser().resolve()
-    if not (x07_repo_root / "Cargo.toml").is_file():
-        ap.error(f"invalid x07 repo root (missing Cargo.toml): {x07_repo_root}")
+    except Exception as e:
+        ap.error(str(e))
 
-    all_benchmarks = ["sum_bytes", "word_count", "rle_encode", "byte_freq", "fibonacci"]
+    all_benchmarks = [
+        "sum_bytes",
+        "word_count",
+        "rle_encode",
+        "byte_freq",
+        "fibonacci",
+        # "regex_is_match",
+        # "regex_count",
+        # "regex_replace",
+    ]
     benchmarks = args.benchmarks if args.benchmarks else all_benchmarks
 
     all_results: dict[str, list[BenchmarkResult]] = {}
@@ -1050,7 +1072,7 @@ def main(argv: list[str]) -> int:
             results = run_benchmark(
                 benchmark,
                 input_data,
-                x07_repo_root,
+                x07_host_runner,
                 perf_repo_root,
                 tmp_dir,
                 iterations=args.iterations,

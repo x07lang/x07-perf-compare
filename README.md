@@ -14,43 +14,44 @@ between X07, C, and Rust implementations of identical algorithms.
 | `rle_encode` | Run-length encoding of byte stream |
 | `byte_freq` | Byte frequency histogram (byte -> count mapping) |
 | `fibonacci` | Iterative Fibonacci computation |
-| `regex_is_match` | Regex `is_match` over generated ASCII text |
-| `regex_count` | Regex `find_all` and count matches |
-| `regex_replace` | Regex `replace_all` with a short replacement |
 
 ## Running Benchmarks
 
 ```bash
+# Download the standalone X07 toolchain from GitHub Releases:
+#   https://github.com/x07lang/x07/releases
+# Extract it somewhere and either add it to PATH or point the runner at it:
+#   tar -xzf x07-vX.Y.Z-macOS.tar.gz -C /path/to/x07-toolchain-dir
+
 # Run all benchmarks with default settings (100KB input, 5 iterations)
-python3 run_benchmarks.py
+python3 run_benchmarks.py --x07-toolchain /path/to/x07-toolchain-dir
 
 # Run with custom input size (in KB)
-python3 run_benchmarks.py --size 1000
+python3 run_benchmarks.py --x07-toolchain /path/to/x07-toolchain-dir --size 1000
 
 # Run specific benchmarks
-python3 run_benchmarks.py --benchmarks sum_bytes word_count
+python3 run_benchmarks.py --x07-toolchain /path/to/x07-toolchain-dir --benchmarks sum_bytes word_count
 
 # More iterations for better statistics
-python3 run_benchmarks.py --iterations 10 --warmup 3
+python3 run_benchmarks.py --x07-toolchain /path/to/x07-toolchain-dir --iterations 10 --warmup 3
 
 # Output as JSON
-python3 run_benchmarks.py --json > results.json
+python3 run_benchmarks.py --x07-toolchain /path/to/x07-toolchain-dir --json > results.json
 
 # Direct binary execution (no host runner overhead)
-python3 run_benchmarks.py --direct
+python3 run_benchmarks.py --x07-toolchain /path/to/x07-toolchain-dir --direct
 
 # Size-focused native builds (passes through to x07-host-runner --cc-profile)
-python3 run_benchmarks.py --x07-cc-profile size
+python3 run_benchmarks.py --x07-toolchain /path/to/x07-toolchain-dir --x07-cc-profile size
 
-# Regex benchmarks require the native ext-regex backend staged into `deps/` in your x07 checkout
-cd /path/to/x07 && ./scripts/build_ext_regex.sh
-
-# Run against a different checkout of the repo (useful for before/after comparisons)
-python3 run_benchmarks.py --repo-root /path/to/x07
+# Run against a different X07 toolchain (useful for before/after comparisons)
+python3 run_benchmarks.py --x07-toolchain /path/to/other-x07-toolchain-dir
 ```
 
 ## Options
 
+- `--x07-host-runner PATH`: Path to `x07-host-runner` (env: `X07_HOST_RUNNER`; default: search `PATH`)
+- `--x07-toolchain DIR`: Extracted toolchain directory containing `x07-host-runner` (env: `X07_TOOLCHAIN`)
 - `--size N`: Input size in KB (default: 100)
 - `--iterations N`: Number of timed runs (default: 5)
 - `--warmup N`: Warmup iterations before timing (default: 2)
@@ -58,7 +59,6 @@ python3 run_benchmarks.py --repo-root /path/to/x07
 - `--json`: Output results as JSON
 - `--direct`: Run X07 binaries directly without host runner overhead
 - `--x07-cc-profile {default,size}`: Select the C toolchain profile for X07 builds
-- `--repo-root`: Path to the `x07lang/x07` checkout (defaults to auto-detect; env: `X07_REPO_ROOT`)
 
 ## Directory Structure
 
@@ -78,7 +78,7 @@ python3 run_benchmarks.py --repo-root /path/to/x07
 - Python 3.10+
 - Rust toolchain (rustc)
 - C compiler (cc/gcc/clang)
-- Built X07 toolchain (`cargo build --release`)
+- X07 toolchain download (standalone binaries from https://github.com/x07lang/x07/releases)
 
 ## Metrics Collected
 
@@ -98,6 +98,10 @@ python3 run_benchmarks.py --repo-root /path/to/x07
 - C and Rust programs are compiled with `-O3` / `opt-level=3`
 - All programs use stdin/stdout for I/O
 - Output correctness is verified (outputs must match across languages)
+
+## Regex Benchmarks
+
+This repo also contains `regex_*` programs, but they depend on the external `ext-regex` package, which is not published to the registry yet. They are not included in the default benchmark set.
 
 ## Performance Comparison (January 2026)
 
