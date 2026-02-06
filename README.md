@@ -5,6 +5,11 @@ Performance comparison benchmarks: **X07 vs C vs Rust**
 This repo contains benchmark programs to compare performance and memory usage
 between X07, C, and Rust implementations of identical algorithms.
 
+Community:
+
+- Discord: https://discord.gg/59xuEuPN47
+- Email: support@x07lang.org
+
 ## Benchmarks
 
 | Benchmark | Description |
