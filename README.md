@@ -108,45 +108,45 @@ python3 run_benchmarks.py --x07-toolchain /path/to/other-x07-toolchain-dir
 
 This repo also contains `regex_*` programs, but they depend on the external `ext-regex` package, which is not published to the registry yet. They are not included in the default benchmark set.
 
-## Performance Comparison (macOS, X07 v0.0.3)
+## Performance Comparison (macOS, X07 v0.0.94)
 
-Results from the standalone toolchain (`x07-v0.0.3-macOS.tar.gz`) with default runner settings (100KB input, 5 iterations, 2 warmup).
+Single-machine snapshot measured on February 6, 2026 using a local release build of `x07-host-runner` from `x07 v0.0.94` (`cargo build -p x07-host-runner --release`) with default settings (100KB input, 5 iterations, 2 warmup).
 
 ### Host Runner Mode (100KB input)
 
 | Benchmark | X07 | C | Rust | C vs X07 | Rust vs X07 |
 |-----------|---------|---|------|--------------|-----------------|
-| sum_bytes | 9.95ms | 3.04ms | 2.29ms | 3.27x | 4.34x |
-| word_count | 10.04ms | 3.73ms | 2.38ms | 2.69x | 4.22x |
-| rle_encode | 9.85ms | 3.15ms | 2.43ms | 3.13x | 4.05x |
-| byte_freq | 10.05ms | 3.21ms | 2.44ms | 3.13x | 4.12x |
-| fibonacci | 9.94ms | 1.75ms | 2.00ms | 5.67x | 4.98x |
+| sum_bytes | 10.76ms | 3.56ms | 2.61ms | 3.03x | 4.13x |
+| word_count | 10.88ms | 4.44ms | 2.83ms | 2.45x | 3.85x |
+| rle_encode | 10.99ms | 4.31ms | 2.92ms | 2.55x | 3.76x |
+| byte_freq | 10.16ms | 4.13ms | 3.00ms | 2.46x | 3.39x |
+| fibonacci | 10.99ms | 2.16ms | 2.63ms | 5.09x | 4.17x |
 
 ### Direct Binary Mode (100KB input)
 
 | Benchmark | X07 | C | Rust | C vs X07 | Rust vs X07 |
 |-----------|---------|---|------|--------------|-----------------|
-| sum_bytes | 2.28ms | 3.06ms | 2.33ms | 0.75x | 0.98x |
-| word_count | 2.62ms | 3.27ms | 2.30ms | 0.80x | 1.14x |
-| rle_encode | 2.39ms | 3.18ms | 2.48ms | 0.75x | 0.96x |
-| byte_freq | 3.26ms | 3.18ms | 2.36ms | 1.02x | 1.38x |
-| fibonacci | 1.87ms | 1.83ms | 1.93ms | 1.02x | 0.97x |
+| sum_bytes | 2.72ms | 3.61ms | 2.69ms | 0.75x | 1.01x |
+| word_count | 2.75ms | 3.61ms | 2.59ms | 0.76x | 1.06x |
+| rle_encode | 2.67ms | 3.51ms | 2.57ms | 0.76x | 1.04x |
+| byte_freq | 3.65ms | 3.50ms | 2.69ms | 1.04x | 1.36x |
+| fibonacci | 2.06ms | 1.81ms | 2.19ms | 1.14x | 0.94x |
 
 ### Compile Times
 
 | Benchmark | X07 | C | Rust |
 |-----------|---------|---|------|
-| sum_bytes | **16.7ms** | 49.1ms | 107.2ms |
-| word_count | **15.4ms** | 47.4ms | 104.9ms |
-| rle_encode | **15.5ms** | 46.6ms | 107.7ms |
-| byte_freq | **16.0ms** | 48.9ms | 114.8ms |
-| fibonacci | **14.7ms** | 43.8ms | 99.4ms |
+| sum_bytes | **11.7ms** | 46.0ms | 95.7ms |
+| word_count | **13.4ms** | 43.7ms | 92.5ms |
+| rle_encode | **13.6ms** | 45.2ms | 99.1ms |
+| byte_freq | **12.8ms** | 44.2ms | 99.7ms |
+| fibonacci | **13.6ms** | 43.1ms | 95.4ms |
 
-X07 compiles ~3x faster than C and ~6-7x faster than Rust.
+On this run, X07 compiles ~3.2-3.9x faster than C and ~6.9-8.2x faster than Rust.
 
 ### Build Size & Memory
 
 | Metric | X07 | C | Rust |
 |--------|---------|---|------|
 | Binary Size | ~34.0 KiB | ~32.8-33.0 KiB | ~432-449 KiB |
-| Peak RSS | ~1.2-1.5 MiB | ~1.2-1.6 MiB | ~1.4-1.7 MiB |
+| Peak RSS | ~1.3-1.6 MiB | ~1.3-1.5 MiB | ~1.5-1.7 MiB |
