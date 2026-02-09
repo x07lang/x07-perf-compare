@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Performance comparison benchmarks: X07 vs C vs Rust
+Performance comparison benchmarks: X07 vs C vs Rust vs Go
 
 Measures execution time, memory usage, compile time, and final build size
-across three languages.
+across multiple languages.
 """
 from __future__ import annotations
 
@@ -543,6 +543,68 @@ class RustRunner:
         return res.stdout, rss_kb
 
 
+class GoRunner:
+    """Runner for Go programs."""
+
+    def __init__(self, go: str = "go"):
+        self.go = go
+
+    def compile(self, source_path: Path, output_path: Path) -> float:
+        """Compile a Go program, returning compile time in ms."""
+        env = os.environ.copy()
+        env["CGO_ENABLED"] = "0"
+
+        cache_dir = output_path.parent / f"{output_path.name}.gocache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        env["GOCACHE"] = str(cache_dir)
+
+        start = time.perf_counter()
+        result = subprocess.run(
+            [
+                self.go,
+                "build",
+                "-trimpath",
+                "-buildvcs=false",
+                "-ldflags",
+                "-s -w",
+                "-o",
+                str(output_path),
+                str(source_path),
+            ],
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+        compile_time = (time.perf_counter() - start) * 1000
+
+        if result.returncode != 0:
+            raise RuntimeError(f"Go compilation failed: {result.stderr}")
+
+        return compile_time
+
+    def run(self, binary_path: Path, input_data: bytes) -> tuple[bytes, float]:
+        """Run a compiled Go program, returning output and time in ms."""
+        start = time.perf_counter()
+        result = subprocess.run(
+            [str(binary_path)],
+            input=input_data,
+            capture_output=True,
+        )
+        run_time = (time.perf_counter() - start) * 1000
+
+        if result.returncode != 0:
+            raise RuntimeError(f"Go execution failed: {result.stderr.decode()}")
+
+        return result.stdout, run_time
+
+    def run_with_rss(self, binary_path: Path, input_data: bytes) -> tuple[bytes, int]:
+        """Run a compiled Go program and return output plus peak RSS (KB)."""
+        res, rss_kb = _run_with_optional_rss([str(binary_path)], input_data, measure_rss=True)
+        if res.returncode != 0:
+            raise RuntimeError(f"Go execution failed: {res.stderr.decode(errors='replace')}")
+        return res.stdout, rss_kb
+
+
 class RustCargoRunner:
     """Runner for Rust programs using Cargo (for external dependencies)."""
 
@@ -705,10 +767,12 @@ def run_benchmark(
     perf_dir = perf_repo_root
     c_runner = CRunner()
     rust_runner = RustRunner()
+    go_runner = GoRunner()
 
     x07_prog = perf_dir / "x07" / f"{benchmark}.x07.json"
     c_prog = perf_dir / "c" / f"{benchmark}.c"
     rust_prog = perf_dir / "rust" / f"{benchmark}.rs"
+    go_prog = perf_dir / "go" / f"{benchmark}.go"
 
     # Check for project-based X07 (e.g., regex benchmarks)
     x07_project = None
@@ -910,6 +974,35 @@ def run_benchmark(
 
         results.append(result)
 
+    if go_prog.exists():
+        result = BenchmarkResult(language="Go", benchmark=benchmark)
+        try:
+            binary = tmp_dir / f"{benchmark}_go"
+            result.compile_time_ms = go_runner.compile(go_prog, binary)
+            result.build_size_bytes = binary.stat().st_size
+
+            output, rss_kb = go_runner.run_with_rss(binary, input_data.data)
+            result.peak_rss_kb = rss_kb
+            result.output_bytes = output
+            if reference_output is not None and output != reference_output:
+                result.error = "Output mismatch with reference"
+
+            for _ in range(warmup):
+                go_runner.run(binary, input_data.data)
+
+            for _ in range(iterations):
+                output, run_time = go_runner.run(binary, input_data.data)
+                result.times_ms.append(run_time)
+            result.output_bytes = output
+            if reference_output is not None and output != reference_output:
+                result.error = "Output mismatch with reference"
+
+        except Exception as e:
+            result.success = False
+            result.error = str(e)
+
+        results.append(result)
+
     return results
 
 
@@ -986,11 +1079,11 @@ def print_summary_table(all_results: dict[str, list[BenchmarkResult]]) -> None:
     print("Summary: Relative Performance (X07 = 1.0x)")
     print("=" * 60)
     print()
-    print(f"{'Benchmark':<20} {'X07':<12} {'C':<12} {'Rust':<12}")
+    print(f"{'Benchmark':<20} {'X07':<12} {'C':<12} {'Rust':<12} {'Go':<12}")
     print("-" * 60)
 
     for benchmark, results in all_results.items():
-        row = {"X07": "1.0x", "C": "N/A", "Rust": "N/A"}
+        row = {"X07": "1.0x", "C": "N/A", "Rust": "N/A", "Go": "N/A"}
 
         x07_time = None
         for r in results:
@@ -1004,7 +1097,9 @@ def print_summary_table(all_results: dict[str, list[BenchmarkResult]]) -> None:
                     ratio = x07_time / r.mean_time_ms
                     row[r.language] = f"{ratio:.2f}x"
 
-        print(f"{benchmark:<20} {row['X07']:<12} {row['C']:<12} {row['Rust']:<12}")
+        print(
+            f"{benchmark:<20} {row['X07']:<12} {row['C']:<12} {row['Rust']:<12} {row['Go']:<12}"
+        )
 
     print()
 

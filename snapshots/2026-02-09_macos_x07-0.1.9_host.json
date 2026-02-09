@@ -1,0 +1,252 @@
+{
+  "sum_bytes": [
+    {
+      "language": "X07",
+      "mean_time_ms": 10.084116971120238,
+      "min_time_ms": 9.950583800673485,
+      "stddev_time_ms": 0.10408133539506352,
+      "compile_time_ms": 129.50962502509356,
+      "build_size_bytes": 34768,
+      "peak_rss_kb": 1408,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": "default"
+    },
+    {
+      "language": "C",
+      "mean_time_ms": 3.1004336196929216,
+      "min_time_ms": 3.0215841252356768,
+      "stddev_time_ms": 0.07592461956555586,
+      "compile_time_ms": 247.22820799797773,
+      "build_size_bytes": 33608,
+      "peak_rss_kb": 1536,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    },
+    {
+      "language": "Rust",
+      "mean_time_ms": 2.1378086414188147,
+      "min_time_ms": 2.0713750272989273,
+      "stddev_time_ms": 0.05234897248983835,
+      "compile_time_ms": 501.8013750668615,
+      "build_size_bytes": 459200,
+      "peak_rss_kb": 1712,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    },
+    {
+      "language": "Go",
+      "mean_time_ms": 2.6383500080555677,
+      "min_time_ms": 2.4389999452978373,
+      "stddev_time_ms": 0.21206533418742848,
+      "compile_time_ms": 1631.2956670299172,
+      "build_size_bytes": 1369922,
+      "peak_rss_kb": 4304,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    }
+  ],
+  "word_count": [
+    {
+      "language": "X07",
+      "mean_time_ms": 10.051150061190128,
+      "min_time_ms": 9.863583138212562,
+      "stddev_time_ms": 0.1561235115178102,
+      "compile_time_ms": 31.845416873693466,
+      "build_size_bytes": 34768,
+      "peak_rss_kb": 1424,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": "default"
+    },
+    {
+      "language": "C",
+      "mean_time_ms": 3.858458297327161,
+      "min_time_ms": 3.516125027090311,
+      "stddev_time_ms": 0.3924712921487312,
+      "compile_time_ms": 42.91333304718137,
+      "build_size_bytes": 33616,
+      "peak_rss_kb": 1520,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    },
+    {
+      "language": "Rust",
+      "mean_time_ms": 2.406266378238797,
+      "min_time_ms": 2.237082924693823,
+      "stddev_time_ms": 0.17131197246616028,
+      "compile_time_ms": 112.58337507024407,
+      "build_size_bytes": 459200,
+      "peak_rss_kb": 1728,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    },
+    {
+      "language": "Go",
+      "mean_time_ms": 3.3360084053128958,
+      "min_time_ms": 2.847334137186408,
+      "stddev_time_ms": 0.4847810323172193,
+      "compile_time_ms": 2361.465207999572,
+      "build_size_bytes": 1369922,
+      "peak_rss_kb": 4448,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    }
+  ],
+  "rle_encode": [
+    {
+      "language": "X07",
+      "mean_time_ms": 14.06661681830883,
+      "min_time_ms": 11.96116697974503,
+      "stddev_time_ms": 1.737322730336741,
+      "compile_time_ms": 29.813500121235847,
+      "build_size_bytes": 34848,
+      "peak_rss_kb": 1600,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": "default"
+    },
+    {
+      "language": "C",
+      "mean_time_ms": 3.9730748161673546,
+      "min_time_ms": 3.5973330959677696,
+      "stddev_time_ms": 0.2559287558244887,
+      "compile_time_ms": 46.65691684931517,
+      "build_size_bytes": 33664,
+      "peak_rss_kb": 1568,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    },
+    {
+      "language": "Rust",
+      "mean_time_ms": 2.7063418179750443,
+      "min_time_ms": 2.4028338957577944,
+      "stddev_time_ms": 0.3347053204414675,
+      "compile_time_ms": 133.0571249127388,
+      "build_size_bytes": 459376,
+      "peak_rss_kb": 1744,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    },
+    {
+      "language": "Go",
+      "mean_time_ms": 2.554416796192527,
+      "min_time_ms": 2.49870796687901,
+      "stddev_time_ms": 0.05831919824340333,
+      "compile_time_ms": 1454.6674999874085,
+      "build_size_bytes": 1369410,
+      "peak_rss_kb": 4320,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    }
+  ],
+  "byte_freq": [
+    {
+      "language": "X07",
+      "mean_time_ms": 9.793792013078928,
+      "min_time_ms": 8.808374870568514,
+      "stddev_time_ms": 0.8206847401756646,
+      "compile_time_ms": 26.531167095527053,
+      "build_size_bytes": 34848,
+      "peak_rss_kb": 1408,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": "default"
+    },
+    {
+      "language": "C",
+      "mean_time_ms": 3.1352917663753033,
+      "min_time_ms": 3.082958050072193,
+      "stddev_time_ms": 0.057028879022706876,
+      "compile_time_ms": 46.257708920165896,
+      "build_size_bytes": 33768,
+      "peak_rss_kb": 1536,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    },
+    {
+      "language": "Rust",
+      "mean_time_ms": 2.266216930001974,
+      "min_time_ms": 2.149416832253337,
+      "stddev_time_ms": 0.07343477083163402,
+      "compile_time_ms": 111.59429117105901,
+      "build_size_bytes": 459552,
+      "peak_rss_kb": 1712,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    },
+    {
+      "language": "Go",
+      "mean_time_ms": 2.792108291760087,
+      "min_time_ms": 2.6216660626232624,
+      "stddev_time_ms": 0.20080118267852284,
+      "compile_time_ms": 1422.3015001043677,
+      "build_size_bytes": 1369922,
+      "peak_rss_kb": 4464,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    }
+  ],
+  "fibonacci": [
+    {
+      "language": "X07",
+      "mean_time_ms": 9.973500249907374,
+      "min_time_ms": 9.639333933591843,
+      "stddev_time_ms": 0.3204235736243759,
+      "compile_time_ms": 32.64508303254843,
+      "build_size_bytes": 34768,
+      "peak_rss_kb": 1312,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": "default"
+    },
+    {
+      "language": "C",
+      "mean_time_ms": 1.8027916084975004,
+      "min_time_ms": 1.7112500499933958,
+      "stddev_time_ms": 0.0664637909595997,
+      "compile_time_ms": 40.12437514029443,
+      "build_size_bytes": 33560,
+      "peak_rss_kb": 1312,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    },
+    {
+      "language": "Rust",
+      "mean_time_ms": 1.9987497478723526,
+      "min_time_ms": 1.861457945778966,
+      "stddev_time_ms": 0.12858565728815588,
+      "compile_time_ms": 96.36095794849098,
+      "build_size_bytes": 442704,
+      "peak_rss_kb": 1504,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    },
+    {
+      "language": "Go",
+      "mean_time_ms": 2.258716616779566,
+      "min_time_ms": 2.1514170803129673,
+      "stddev_time_ms": 0.10758009785239232,
+      "compile_time_ms": 1436.9438339490443,
+      "build_size_bytes": 1369922,
+      "peak_rss_kb": 3664,
+      "success": true,
+      "error": "",
+      "x07_cc_profile": null
+    }
+  ]
+}
