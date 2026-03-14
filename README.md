@@ -2,13 +2,70 @@
 
 Performance comparison benchmarks: **X07 vs C vs Rust vs Go**
 
-This repo contains benchmark programs to compare performance and memory usage
-between X07, C, Rust, and Go implementations of identical algorithms.
+This repo contains the benchmark sources, runner, and published snapshots used to measure how X07 behaves against familiar systems languages on the same workloads.
 
 Community:
 
 - Discord: https://discord.gg/59xuEuPN47
 - Email: support@x07lang.org
+
+## What Is In This Repo
+
+This repo includes:
+
+- matching benchmark implementations in `x07/`, `c/`, `rust/`, `rust_cargo/`, and `go/`
+- project-based X07 benchmarks in `projects/`
+- the benchmark driver in `run_benchmarks.py`
+- reproducible result snapshots under `snapshots/`
+
+## Vision
+
+The vision of `x07-perf-compare` is to give end users a simple, inspectable answer to a practical question:
+
+"If X07 is designed for agents, does that force me to give up runtime speed or reasonable binary size?"
+
+This repo exists so the answer is based on runnable code and published measurements, not marketing claims.
+
+## How It Fits The X07 Ecosystem
+
+`x07-perf-compare` is an evidence repo for the wider X07 story.
+
+- [`x07`](https://github.com/x07lang/x07) is the language and toolchain being measured
+- [`x07lang.org`](https://x07lang.org) and the core docs use the results here to explain the performance story
+- other repos in the ecosystem focus on packaging, MCP, web UI, registry, and platform workflows
+- this repo isolates one question: how fast the generated X07 programs run and how expensive they are to build
+
+That makes this repo a supporting part of the whole, not a product surface on its own.
+
+## Practical Usage
+
+Use this repo when you want to:
+
+- evaluate X07 against C, Rust, and Go on comparable workloads
+- measure the impact of a toolchain change before a release
+- generate fresh benchmark snapshots for docs, release notes, or internal review
+- inspect exactly how the published numbers were produced
+
+## Install And Use It Standalone
+
+You can run this repo by itself with a released X07 toolchain plus the usual native compilers:
+
+- install or download X07 from [`x07`](https://github.com/x07lang/x07)
+- install Python, a C compiler, Rust, and Go
+- point `run_benchmarks.py` at the X07 toolchain directory or `x07-host-runner`
+
+If you want the shortest path, use a released toolchain bundle from GitHub Releases and keep this repo separate from the main X07 workspace.
+
+## Use It As Part Of The X07 Ecosystem
+
+In the full ecosystem, this repo is typically used after a compiler, runtime, or packaging change:
+
+1. build or install the candidate X07 toolchain
+2. run the benchmarks here
+3. compare the fresh numbers with previous snapshots
+4. feed the results back into release notes, docs, or go/no-go decisions
+
+That keeps the performance story consistent across the language repo, the docs site, and release materials.
 
 ## Benchmarks
 
