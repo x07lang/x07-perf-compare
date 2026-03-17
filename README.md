@@ -168,50 +168,56 @@ python3 run_benchmarks.py --x07-toolchain /path/to/other-x07-toolchain-dir
 
 This repo also contains `regex_*` programs, but they depend on the external `ext-regex` package, which is not published to the registry yet. They are not included in the default benchmark set.
 
-## Performance Comparison (macOS, X07 v0.1.9)
+## Performance Comparison (macOS, X07 v0.1.89)
 
-Single-machine snapshot measured on February 9, 2026 (Apple M4 Max, macOS 15.2 / Darwin 25.2.0) using a local release build of `x07-host-runner` from `x07 0.1.9` (`cargo build -p x07-host-runner --release`) with default settings (100KB input, 5 iterations, 2 warmup).
+Single-machine snapshot measured on March 17, 2026 (Apple M4 Max, macOS 26.3 / Darwin 25D125) using a local release build of `x07-host-runner` from `x07 v0.1.89` (`cargo build -p x07-host-runner --release`) with default settings (100KB input, 5 iterations, 2 warmup).
+
+Compared with the previous published `v0.1.9` snapshot, this warmed `v0.1.89` run improved mean X07 runtime by about 10.7% in host-runner mode and 7.4% in direct mode, kept binary size effectively flat, and increased peak RSS by about 2.9%.
 
 Raw results:
 
-- `snapshots/2026-02-09_macos_x07-0.1.9_host.json`
-- `snapshots/2026-02-09_macos_x07-0.1.9_direct.json`
+- `snapshots/2026-03-17_macos_x07-0.1.89_host.json`
+- `snapshots/2026-03-17_macos_x07-0.1.89_direct.json`
+- historical reference: `snapshots/2026-02-09_macos_x07-0.1.9_host.json`
+- historical reference: `snapshots/2026-02-09_macos_x07-0.1.9_direct.json`
 
 ### Host Runner Mode (100KB input)
 
 | Benchmark | X07 | C | Rust | Go | C vs X07 | Rust vs X07 | Go vs X07 |
 |-----------|-----|---|------|----|----------|-------------|-----------|
-| sum_bytes | 10.08ms | 3.10ms | 2.14ms | 2.64ms | 3.25x | 4.72x | 3.82x |
-| word_count | 10.05ms | 3.86ms | 2.41ms | 3.34ms | 2.60x | 4.18x | 3.01x |
-| rle_encode | 14.07ms | 3.97ms | 2.71ms | 2.55ms | 3.54x | 5.20x | 5.51x |
-| byte_freq | 9.79ms | 3.14ms | 2.27ms | 2.79ms | 3.12x | 4.32x | 3.51x |
-| fibonacci | 9.97ms | 1.80ms | 2.00ms | 2.26ms | 5.53x | 4.99x | 4.42x |
+| sum_bytes | 9.58ms | 2.93ms | 1.96ms | 2.44ms | 3.27x | 4.89x | 3.92x |
+| word_count | 9.29ms | 2.96ms | 2.05ms | 2.55ms | 3.13x | 4.53x | 3.64x |
+| rle_encode | 9.39ms | 2.80ms | 2.10ms | 2.45ms | 3.35x | 4.46x | 3.84x |
+| byte_freq | 9.58ms | 2.86ms | 2.12ms | 2.37ms | 3.35x | 4.52x | 4.04x |
+| fibonacci | 9.41ms | 1.53ms | 1.75ms | 2.01ms | 6.15x | 5.37x | 4.68x |
 
 ### Direct Binary Mode (100KB input)
 
 | Benchmark | X07 | C | Rust | Go | C vs X07 | Rust vs X07 | Go vs X07 |
 |-----------|-----|---|------|----|----------|-------------|-----------|
-| sum_bytes | 2.20ms | 2.98ms | 2.13ms | 2.54ms | 0.74x | 1.03x | 0.87x |
-| word_count | 2.48ms | 3.22ms | 2.24ms | 2.63ms | 0.77x | 1.11x | 0.94x |
-| rle_encode | 2.34ms | 3.19ms | 2.36ms | 2.72ms | 0.73x | 0.99x | 0.86x |
-| byte_freq | 3.31ms | 3.09ms | 2.20ms | 2.50ms | 1.07x | 1.50x | 1.32x |
-| fibonacci | 2.04ms | 1.82ms | 1.85ms | 2.27ms | 1.12x | 1.10x | 0.90x |
+| sum_bytes | 2.06ms | 2.90ms | 2.15ms | 2.53ms | 0.71x | 0.96x | 0.81x |
+| word_count | 2.43ms | 3.01ms | 2.12ms | 2.58ms | 0.81x | 1.14x | 0.94x |
+| rle_encode | 2.22ms | 2.94ms | 2.10ms | 2.66ms | 0.76x | 1.06x | 0.84x |
+| byte_freq | 3.21ms | 2.97ms | 2.12ms | 2.58ms | 1.08x | 1.51x | 1.24x |
+| fibonacci | 1.62ms | 1.50ms | 1.81ms | 2.15ms | 1.07x | 0.89x | 0.75x |
 
 ### Compile Times (warm cache)
 
+The compile figures below come from the warmed host-runner snapshot so they do not include the first-run cold-cache skew.
+
 | Benchmark | X07 | C | Rust | Go |
 |-----------|-----|---|------|----|
-| sum_bytes | **27.5ms** | 50.2ms | 98.6ms | 1443.2ms |
-| word_count | **29.1ms** | 42.1ms | 96.4ms | 1453.6ms |
-| rle_encode | **28.3ms** | 42.4ms | 100.3ms | 1352.4ms |
-| byte_freq | **31.3ms** | 44.1ms | 104.3ms | 1424.9ms |
-| fibonacci | **26.5ms** | 39.6ms | 94.1ms | 1395.4ms |
+| sum_bytes | **20.0ms** | 43.6ms | 87.5ms | 1246.8ms |
+| word_count | **21.1ms** | 41.1ms | 85.4ms | 1249.1ms |
+| rle_encode | **21.6ms** | 41.4ms | 89.5ms | 1228.7ms |
+| byte_freq | **23.4ms** | 41.5ms | 94.7ms | 1254.1ms |
+| fibonacci | **22.2ms** | 38.7ms | 84.2ms | 1257.8ms |
 
-On this run, X07 compiles ~1.3-1.8x faster than C and ~3.1-3.7x faster than Rust.
+On this run, X07 compiles about 1.7-2.2x faster than C and about 3.8-4.1x faster than Rust.
 
 ### Build Size & Memory
 
 | Metric | X07 | C | Rust | Go |
 |--------|-----|---|------|----|
-| Binary Size | ~34.0 KiB | ~32.8-33.0 KiB | ~432-449 KiB | ~1337 KiB |
-| Peak RSS | ~1.3-1.6 MiB | ~1.3-1.5 MiB | ~1.5-1.7 MiB | ~3.6-4.4 MiB |
+| Binary Size | ~34.0-34.1 KiB | ~32.8-33.0 KiB | ~432-449 KiB | ~1337 KiB |
+| Peak RSS | ~1.3-1.6 MiB | ~1.3-1.6 MiB | ~1.5-1.7 MiB | ~3.7-4.4 MiB |
