@@ -1,5 +1,9 @@
 # x07-perf-compare
 
+## Agent Entrypoint
+
+Start here: https://x07lang.org/docs/getting-started/agent-quickstart
+
 Performance comparison benchmarks: **X07 vs C vs Rust vs Go**
 
 This repo contains the benchmark sources, runner, and published snapshots used to measure how X07 behaves against familiar systems languages on the same workloads.
